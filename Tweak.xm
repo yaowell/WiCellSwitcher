@@ -38,6 +38,7 @@
 
 HBPreferences *preferences;
 
+BOOL enabled = YES; // 新增：插件总开关全局变量
 BOOL cellularActive;
 BOOL wiFiActive;
 BOOL cellularActivePreviousState;
@@ -48,20 +49,13 @@ id   wiFiButtonID;
 
 extern "C" Boolean CTCellularDataPlanGetIsEnabled();
 extern "C" void CTCellularDataPlanSetIsEnabled(Boolean enabled);
-// extern "C" CFNotificationCenterRef CTTelephonyCenterGetDefault();
-// extern "C" void CTTelephonyCenterAddObserver(CFNotificationCenterRef center, const void *observer, CFNotificationCallback callBack, CFStringRef name, const void *object, CFNotificationSuspensionBehavior suspensionBehavior);
-// extern "C" void CTTelephonyCenterRemoveObserver(CFNotificationCenterRef center, const void *observer, CFStringRef name, const void *object);
-// extern "C" CFStringRef const kCTRegistrationDataStatusChangedNotification;
-
-// static void FSDataSwitchStatusDidChange(void)
-// {
-//   [[%c(SBWiFiManager) sharedInstance] mobileDataStatusHasChanged];
-// }
 
 %hook SpringBoard
 - (void)applicationDidFinishLaunching:(id)application
 {
   %orig;
+  if (!enabled) return; // 总开关关闭时不执行
+
   if (!disconnectOption)
     wiFiActive = [[%c(SBWiFiManager) sharedInstance] isPowered];
   else
@@ -73,14 +67,6 @@ extern "C" void CTCellularDataPlanSetIsEnabled(Boolean enabled);
     cellularActivePreviousState = !cellularActive;
     wiFiActivePreviousState = wiFiActive;
   }
-  // CTTelephonyCenterAddObserver(
-  //   CTTelephonyCenterGetDefault(),
-  //   NULL,
-  //   (CFNotificationCallback)FSDataSwitchStatusDidChange,
-  //   kCTRegistrationDataStatusChangedNotification,
-  //   NULL,
-  //   CFNotificationSuspensionBehaviorCoalesce
-  // );
 }
 %end
 
@@ -88,6 +74,7 @@ extern "C" void CTCellularDataPlanSetIsEnabled(Boolean enabled);
 - (void)_updateDataNetworkItem
 {
   %orig;
+  if (!enabled) return; // 总开关关闭时不执行
   [[%c(SBWiFiManager) sharedInstance] mobileDataStatusHasChanged];
 }
 %end
@@ -96,6 +83,8 @@ extern "C" void CTCellularDataPlanSetIsEnabled(Boolean enabled);
 - (void)_powerStateDidChange
 {
   %orig;
+  if (!enabled) return; // 总开关关闭时不执行
+
   if (!justChangedStatus && !disconnectOption)
   {
     cellularActive = [self isMobileDataEnabled];
@@ -114,6 +103,8 @@ extern "C" void CTCellularDataPlanSetIsEnabled(Boolean enabled);
 - (void)_linkDidChange
 {
   %orig;
+  if (!enabled) return; // 总开关关闭时不执行
+
   if (!justChangedStatus && disconnectOption)
   {
     cellularActive = [self isMobileDataEnabled];
@@ -132,6 +123,8 @@ extern "C" void CTCellularDataPlanSetIsEnabled(Boolean enabled);
 %new
 - (void)mobileDataStatusHasChanged
 {
+  if (!enabled) return; // 总开关关闭时不执行
+
   if (!justChangedStatus && disconnectOption)
   {
     cellularActive = [self isMobileDataEnabled];
@@ -169,5 +162,6 @@ extern "C" void CTCellularDataPlanSetIsEnabled(Boolean enabled);
 %ctor
 {
   preferences = [[HBPreferences alloc] initWithIdentifier:@"com.brunonfl.wicellswitcher"];
+  [preferences registerBool:&enabled default:YES forKey:@"enabled"]; // 绑定总开关
   [preferences registerBool:&disconnectOption default:YES forKey:@"disconnectOptionSwitch"];
 }
