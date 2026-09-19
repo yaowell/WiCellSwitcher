@@ -3,7 +3,6 @@
 @interface SBWiFiManager
 + (id)sharedInstance;
 - (BOOL)isPowered;
-- (void)_powerStateDidChange;
 - (void)_linkDidChange;
 - (id)currentNetworkName;
 - (BOOL)isAssociated;
