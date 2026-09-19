@@ -1,14 +1,13 @@
-export ARCHS = arm64 arm64e
-export TARGET = iphone:clang:15.4.1:12.1
-export FINALPACKAGE = 1
+ARCHS = arm64 arm64e
+TARGET := iphone:clang:latest:14.0
 
 include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = WiCellSwitcher
-WiCellSwitcher_FILES += Tweak.xm
-WiCellSwitcher_CFLAGS += -fobjc-arc
-WiCellSwitcher_FRAMEWORKS += UIKit CoreTelephony SystemConfiguration Foundation
-WiCellSwitcher_EXTRA_FRAMEWORKS += Cephei
+WiCellSwitcher_FILES = Tweak.xm
+WiCellSwitcher_CFLAGS = -fobjc-arc
+WiCellSwitcher_FRAMEWORKS = UIKit CoreTelephony SystemConfiguration Foundation
+WiCellSwitcher_EXTRA_FRAMEWORKS = Cephei
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 
